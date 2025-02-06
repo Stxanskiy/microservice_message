@@ -1,0 +1,110 @@
+version: '3.9'
+
+services:
+  # -----------------------
+  # Cassandra для кэширования
+  # -----------------------
+  cassandra:
+    image: cassandra:latest
+    container_name: messaging_cassandra
+    ports:
+      - "9042:9042"
+    networks:
+      - messaging_net
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+    environment:
+      CASSANDRA_CLUSTER_NAME: "MessagingCluster"
+
+  # -----------------------
+  # Zookeeper (для Kafka)
+  # -----------------------
+  zookeeper:
+    image: bitnami/zookeeper:latest
+    container_name: messaging_zookeeper
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: "yes"
+    ports:
+      - "2181:2181"
+    networks:
+      - messaging_net
+
+  # -----------------------
+  # Kafka
+  # -----------------------
+  kafka:
+    image: bitnami/kafka:latest
+    container_name: messaging_kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    ports:
+      - "9092:9092"
+    networks:
+      - messaging_net
+
+  # -----------------------
+  # Kafka UI
+  # -----------------------
+  kafka_ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: messaging_kafka_ui
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_CLUSTERS_0_NAME: "MessagingKafkaCluster"
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka:9092"
+    ports:
+      - "8085:8085"
+    networks:
+      - messaging_net
+
+  # -----------------------
+  # Jaeger для трасс
+  # -----------------------
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: messaging_jaeger
+    ports:
+      - "16686:16686"  # UI Jaeger
+      - "14268:14268"  # Точка приёма spans
+    networks:
+      - messaging_net
+
+  # -----------------------
+  # Микросервис обмена сообщениями
+  # -----------------------
+  messaging_service:
+    build:
+      context: build
+      dockerfile: Dockerfile
+    container_name: messaging_service
+    depends_on:
+      - cassandra
+      - kafka
+      - jaeger
+    environment:
+      SERVER_PORT: "8081"
+      POSTGRES_URL: "postgres://admin:456456@postgres:5432/auth_db?sslmode=disable up"
+      CASSANDRA_URL: "cassandra"
+      KAFKA_BROKERS: "kafka:9092"
+      JWT_SECRET: "supersecretkey"
+      JAEGER_URL: "http://jaeger:14268/api/traces"
+    ports:
+      - "8081:8081"
+    networks:
+      - messaging_net
+    # Можно добавить volume, если нужно.
+
+networks:
+  messaging_net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  cassandra_data:

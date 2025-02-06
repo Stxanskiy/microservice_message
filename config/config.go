@@ -1,40 +1,42 @@
 package config
 
 import (
-	"os"
-	"strings"
-
 	"github.com/joho/godotenv"
 	"gitlab.com/nevasik7/lg"
+	"os"
 )
 
 type Config struct {
-	DatabaseURL  string
-	KafkaBrokers []string
-	MessageTopic string
-	KafkaUI      string
+	ServerPort   string
+	PostgreURL   string
+	CassandraURL string
+	KafkaBrokers string
+	JwtSecret    string
+	JaegerURL    string
 }
 
-func LoadConfig() (*Config, error) {
-	err := godotenv.Load()
+func LoadCOnfig() (*Config, error) {
+	err := godotenv.Load(".env")
 	if err != nil {
-		lg.Panicf("Error loading .env file: %v", err)
+		lg.Errorf("File .env error to loading: %v", err)
 	}
 
-	// Считываем переменные окружения
-	databaseURL := os.Getenv("DATABASE_URL")
-	kafkaBrokersStr := os.Getenv("KAFKA_BROKERS") // Например: "localhost:9092"
-	messageTopic := os.Getenv("MESSAGE_TOPIC")
-	kafkaUI := os.Getenv("KAFKA_UI") // Например: "localhost:9093"
-
-	// Превращаем строку брокеров в срез (если хотим поддерживать несколько адресов)
-	// Если у вас только один брокер, можно оставить []string{kafkaBrokersStr}
-	kafkaBrokers := strings.Split(kafkaBrokersStr, ",")
-
-	return &Config{
-		DatabaseURL:  databaseURL,
-		KafkaBrokers: kafkaBrokers,
-		MessageTopic: messageTopic,
-		KafkaUI:      kafkaUI,
-	}, nil
+	cfg := &Config{
+		ServerPort:   os.Getenv("SERVER_PORT"),
+		PostgreURL:   os.Getenv("POSTGRES_URL"),
+		CassandraURL: os.Getenv("CASSANDRA_URL"),
+		KafkaBrokers: os.Getenv("KAFKA_BROKERS"),
+		JwtSecret:    os.Getenv("JWT_SECRET"),
+		JaegerURL:    os.Getenv("JAEGER_URL"),
+	}
+	return cfg, err
 }
+
+/*
+func getEnv(key, defaultVal string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+	return defaultVal
+}
+*/
