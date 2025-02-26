@@ -24,7 +24,7 @@ func LoadCOnfig() (*Config, error) {
 	cfg := &Config{
 		ServerPort:   os.Getenv("SERVER_PORT"),
 		PostgreURL:   os.Getenv("POSTGRES_URL"),
-		CassandraURL: os.Getenv("CASSANDRA_URL"),
+		CassandraURL: getEnv("CASSANDRA_URL", "localhost:9042"),
 		KafkaBrokers: os.Getenv("KAFKA_BROKERS"),
 		JwtSecret:    os.Getenv("JWT_SECRET"),
 		JaegerURL:    os.Getenv("JAEGER_URL"),
@@ -32,11 +32,9 @@ func LoadCOnfig() (*Config, error) {
 	return cfg, err
 }
 
-/*
 func getEnv(key, defaultVal string) string {
 	if value, exists := os.LookupEnv(key); exists {
 		return value
 	}
 	return defaultVal
 }
-*/

@@ -1,34 +1,40 @@
-# ---------------------------------
-# 1) Сборка Go-приложения (stage 1)
-# ---------------------------------
-FROM golang:1.20 AS builder
+# --------------------------------------------
+#       STAGE 1: build
+# --------------------------------------------
+FROM golang:1.23 as builder
 
-# Рабочая директория в контейнере
 WORKDIR /app
+# Копируем .env
+COPY .env .env
 
-# Копируем go.mod и go.sum, чтобы заранее скачать зависимости
+# Копируем go.mod и go.sum
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Копируем исходный код
-COPY build .
+# Копируем остальной код
+COPY . .
 
 # Собираем бинарник
-RUN CGO_ENABLED=0 GOOS=linux go build -o /messaging_service cmd/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o microservice_message ./cmd/main.go
 
-# ---------------------------------
-# 2) Финальный контейнер (stage 2)
-# ---------------------------------
-FROM alpine:3.18
+# --------------------------------------------
+#       STAGE 2: run
+# --------------------------------------------
+FROM alpine:3.17
 
-# Создадим некорневую директорию для нашего приложения
+RUN apk add --no-cache tzdata
+ENV TZ=Europe/Moscow
+
+# Создаем пользователя без root-привилегий (безопаснее)
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
 WORKDIR /app
+COPY --from=builder /app/microservice_message /app/microservice_message
+COPY --from=builder /app/.env /app/.env
 
-# Копируем скомпилированный бинарник из stage1
-COPY --from=builder /messaging_service /app/messaging_service
+# Выставляем права
+RUN chown -R appuser:appgroup /app
+USER appuser
 
-# Порт, на котором запускается сервис
 EXPOSE 8081
-
-# Команда запуска
-ENTRYPOINT ["/app/messaging_service"]
+ENTRYPOINT ["/app/microservice_message"]
