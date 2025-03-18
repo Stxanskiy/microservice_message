@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"gitlab.com/nevasik7/lg"
 	"log"
 	"net/http"
@@ -13,8 +14,6 @@ import (
 	"sevice_message_1/pkg/cassandra"
 	"sevice_message_1/pkg/jwt"
 	"sevice_message_1/pkg/kafka"
-	"sevice_message_1/pkg/ratelimiter"
-	"sevice_message_1/pkg/tracing"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -46,9 +45,11 @@ func SetupRouter(cfg *config.Config, hub *websocket.Hub) http.Handler {
 	}))
 
 	// Rate limiting
-	r.Use(ratelimiter.RateLimit(100))
+	//TODO Влкючить потом обратно трейсниг
+	/*r.Use(ratelimiter.RateLimit(100))*/
 	// OpenTelemetry middleware
-	r.Use(tracing.Middleware)
+	//TODO Влкючить потом обратно трейсниг
+	/*r.Use(tracing.Middleware)*/
 
 	// Подключение к базе данных PostgreSQL
 	pgPool, err := pgxpool.New(context.Background(), cfg.PostgreURL)
@@ -88,6 +89,7 @@ func SetupRouter(cfg *config.Config, hub *websocket.Hub) http.Handler {
 		r.Use(authMiddleware)
 		r.Mount("/api/chats", http2.NewRouter(chatUC))
 		r.Handle("/ws/chats/{chatID}", websocket.NewWebSocketHandler(chatUC, hub))
+		r.Handle("/metrics", promhttp.Handler())
 	})
 	return r
 }
@@ -105,7 +107,7 @@ func StartServer(cfg *config.Config) {
 		WriteTimeout: 15 * time.Second,
 	}
 
-	lg.Infof("Messaging service starting on port %s", cfg.ServerPort+"\nLink:http://localhost:8081")
+	lg.Infof("Messaging service starting on port %s", cfg.ServerPort+"\nLink:http://localhost:"+cfg.ServerPort)
 	if err := srv.ListenAndServe(); err != nil {
 		lg.Fatalf("Server error: %v", err)
 

@@ -10,4 +10,6 @@ const (
 	QueryGetCachedMessages = `SELECT message_id, chat_id, sender_id, content, created_at FROM message_cache WHERE chat_id = ?`
 	QueryGetChatsUserID    = ` SELECT c.id, c.name, c.type, c.created_at FROM chats c JOIN chat_participants cp ON c.id = cp.chat_id WHERE cp.user_id = $1`
 	QueryGetNicknameUserID = `SELECT u.nickname FROM chat_participants cp INNER JOIN users u ON u.id = cp.user_id WHERE cp.chat_id = $1 AND cp.user_id <> $2 LIMIT 1`
+	QueryGetPrivateChat    = `SELECT c.id, c.name, c.type, c.created_at FROM chats c INNER JOIN chat_participants cp1 ON cp1.chat_id = c.id INNER JOIN chat_participants cp2 ON cp2.chat_id = c.id WHERE c.type = 'private' AND cp1.user_id = $1 AND cp2.user_id = $2`
+	QueryGetChatsForUser   = `SELECT c.id, c.name, c.type FROM chats c INNER JOIN chat_participants cp ON cp.chat_id = c.id WHERE cp.user_id = $1`
 )

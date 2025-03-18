@@ -106,12 +106,7 @@ func (r *ChatRepo) GetChatHistory(ctx context.Context, chatID int64) ([]*model.M
 // GetChatsForUser возвращает список чатов, в которых участвует пользователь с заданным userID.
 func (r *ChatRepo) GetChatsForUser(ctx context.Context, userID int64) ([]ChatDTO, error) {
 	// 1. Получаем все чаты пользователя
-	query := `
-		SELECT c.id, c.name, c.type
-		FROM chats c
-		INNER JOIN chat_participants cp ON cp.chat_id = c.id
-		WHERE cp.user_id = $1
-	`
+	query := QueryGetChatsForUser
 	rows, err := r.pgPool.Query(ctx, query, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query chats: %w", err)
@@ -163,15 +158,7 @@ func (r *ChatRepo) getOtherParticipantNickname(ctx context.Context, chatID, curr
 
 // repository/postgres_repo.go
 func (r *ChatRepo) GetPrivateChatBetween(ctx context.Context, user1, user2 int64) (*model.Chat, error) {
-	query := `
-        SELECT c.id, c.name, c.type, c.created_at
-        FROM chats c
-        INNER JOIN chat_participants cp1 ON cp1.chat_id = c.id
-        INNER JOIN chat_participants cp2 ON cp2.chat_id = c.id
-        WHERE c.type = 'private'
-          AND cp1.user_id = $1
-          AND cp2.user_id = $2
-    `
+	query := QueryGetPrivateChat
 	row := r.pgPool.QueryRow(ctx, query, user1, user2)
 	var chat model.Chat
 	err := row.Scan(&chat.ID, &chat.Name, &chat.Type, &chat.CreatedAt)

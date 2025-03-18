@@ -1,17 +1,7 @@
 package tracing
 
-import (
-	"go.opentelemetry.io/otel/exporters/jaeger"
-	"net/http"
-
-	"go.opentelemetry.io/otel"
-
-	"go.opentelemetry.io/otel/sdk/resource"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
-)
-
-func InitTracer(jaegerURL, serviceName string) (*sdktrace.TracerProvider, error) {
+//TODO again
+/*func InitTracer(jaegerURL, serviceName string) (*sdktrace.TracerProvider, error) {
 	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(jaegerURL)))
 	if err != nil {
 		return nil, err
@@ -35,4 +25,4 @@ func Middleware(next http.Handler) http.Handler {
 		defer span.End()
 		next.ServeHTTP(w, r)
 	})
-}
+}*/

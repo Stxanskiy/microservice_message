@@ -1,12 +1,10 @@
 package main
 
 import (
-	"context"
 	"github.com/joho/godotenv"
 	"gitlab.com/nevasik7/lg"
 	"sevice_message_1/config"
 	"sevice_message_1/intenral/server"
-	"sevice_message_1/pkg/tracing"
 )
 
 func main() {
@@ -24,7 +22,8 @@ func main() {
 	}
 
 	// Инициализируем распределённое трассирование (Jaeger)
-	tp, err := tracing.InitTracer(cfg.JaegerURL, "messaging_service")
+	//TODO Потом влючить jaeger обратно
+	/*tp, err := tracing.InitTracer(cfg.JaegerURL, "messaging_service")
 	if err != nil {
 		lg.Fatalf("failed to initialize tracer: %v", err)
 	}
@@ -32,7 +31,7 @@ func main() {
 		if err := tp.Shutdown(context.Background()); err != nil {
 			lg.Fatalf("Error shutting down tracer: %v", err)
 		}
-	}()
+	}()*/
 
 	//TODO он инициализирован уже в StartServer
 	////Инициализации вебсокет хабл
